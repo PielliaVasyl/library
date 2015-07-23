@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+<!-- extend base layout -->
+{% extends "base.html" %}
+
+{% block content %}
+    <form action="" method=post class="form-horizontal">
+        {{ form.hidden_tag() }}
+    <h2>Sign in to Library </h2>
+    <div class="control-group">
+        <div class="controls">
+            {{ form.username(placeholder="Enter Username", class="input-xlarge", required=True) }}
+            {% for error in form.errors.username %}
+            <span style="color: red;">[{{error}}]</span>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="control-group">
+        <div class="controls">
+            {{ form.password(placeholder="Enter Password", class="input-xlarge", required=True) }}
+            {% for error in form.errors.password %}
+            <span style="color: red;">[{{error}}]</span>
+            {% endfor %}
+        </div>
+    </div>
+
+	<div class="control-group">
+        <div class="controls">
+            {{ form.remember_me }}
+            Remember me
+        </div>
+    </div>
+
+    <div class="control-group">
+        <div class="controls">
+          <button type="submit" class="btn btn-success">Signin</button>
+        </div>
+    </div>
+  </form>
+{% endblock %}
+</body>
+</html>
+

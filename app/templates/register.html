@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+  <form action="" method=post class="form-horizontal">
+      {{ form.hidden_tag() }}
+    <h2>Sign up for Library </h2>
+    <div class="control-group">
+        <div class="controls">
+            {{ form.username(class="input-xlarge", placeholder="Enter Username", required=True) }}
+            {% for error in form.errors.username %}
+            <span style="color: red;">[{{error}}]</span>
+            {% endfor %}
+        </div>
+    </div>
+ 
+    <div class="control-group">
+        <div class="controls">
+            {{ form.password(class="input-xlarge", placeholder="Enter Password", required=True) }}
+            {% for error in form.errors.password %}
+            <span style="color: red;">[{{error}}]</span>
+            {% endfor %}
+        </div>
+    </div>
+ 
+    <div class="control-group">
+        <div class="controls">
+            {{ form.email(class="input-xlarge", placeholder="Enter Email", required=True) }}
+            {% for error in form.errors.email %}
+            <span style="color: red;">[{{error}}]</span>
+            {% endfor %}
+        </div>
+    </div>
+ 
+    <div class="control-group">
+        <div class="controls">
+          <button type="submit" class="btn btn-success">Signup</button>
+        </div>
+    </div>
+  </form>
+{% endblock %}
