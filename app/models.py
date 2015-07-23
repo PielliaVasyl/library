@@ -24,6 +24,18 @@ class User(db.Model):
     def avatar(self, size):
         return 'http://www.gravatar.com/avatar/' + md5(self.email).hexdigest() + '?d=mm&s=' + str(size)
 
+    @staticmethod
+    def make_unique_username(username):
+        if User.query.filter_by(username = username).first() == None:
+            return username
+        version = 2
+        while True:
+            new_username = username + str(version)
+            if User.query.filter_by(username = new_username).first() == None:
+                break
+            version += 1
+        return new_username
+
     def __init__(self, username, password, email):
         self.username = username
         self.password = password

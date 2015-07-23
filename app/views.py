@@ -73,6 +73,7 @@ def logout():
     flash("You have successfully logged out!")
     return redirect(url_for('index'))
 
+
 @app.before_request
 def before_request():
     g.user = current_user
@@ -80,6 +81,7 @@ def before_request():
         g.user.last_seen = datetime.utcnow()
         db.session.add(g.user)
         db.session.commit()
+
 
 @lm.user_loader
 def load_user(id):
@@ -101,10 +103,10 @@ def user(username):
                            authors=authors)
 
 
-@app.route('/user/edit', methods = ['GET', 'POST'])
+@app.route('/user/edit', methods=['GET', 'POST'])
 @login_required
 def user_edit():
-    form = EditForm()
+    form = EditForm(g.user.username)
     if form.validate_on_submit():
         g.user.username = form.username.data
         g.user.about_me = form.about_me.data
@@ -117,6 +119,17 @@ def user_edit():
         form.about_me.data = g.user.about_me
     return render_template('user_edit.html',
                            form=form)
+
+
+@app.errorhandler(404)
+def not_found_error(error):
+    return render_template('404.html'), 404
+
+
+@app.errorhandler(500)
+def internal_error(error):
+    db.session.rollback()
+    return render_template('500.html'), 500
 
 
 #@app.route('/books')
