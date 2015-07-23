@@ -1,4 +1,5 @@
-from app.forms import LoginForm, RegisterForm
+from datetime import datetime
+from app.forms import LoginForm, RegisterForm, EditForm
 from app.models import User
 from flask.ext.login import login_user, logout_user, current_user, login_required
 
@@ -76,12 +77,46 @@ def logout():
 def before_request():
     g.user = current_user
     if g.user.is_authenticated():
+        g.user.last_seen = datetime.utcnow()
         db.session.add(g.user)
         db.session.commit()
 
 @lm.user_loader
 def load_user(id):
     return db.session.query(User).get(int(id))
+
+
+@app.route('/user/<username>')
+@login_required
+def user(username):
+    user = User.query.filter_by(username=username).first()
+    if user is None:
+        flash('User ' + username + ' not found.')
+        return redirect(url_for('index'))
+    books = user.books
+    authors = user.authors
+    return render_template('user.html',
+                           user=user,
+                           books=books,
+                           authors=authors)
+
+
+@app.route('/user/edit', methods = ['GET', 'POST'])
+@login_required
+def user_edit():
+    form = EditForm()
+    if form.validate_on_submit():
+        g.user.username = form.username.data
+        g.user.about_me = form.about_me.data
+        db.session.add(g.user)
+        db.session.commit()
+        flash('Your changes have been saved.')
+        return redirect(url_for('user_edit'))
+    else:
+        form.username.data = g.user.username
+        form.about_me.data = g.user.about_me
+    return render_template('user_edit.html',
+                           form=form)
 
 
 #@app.route('/books')

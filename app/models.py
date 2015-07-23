@@ -3,6 +3,7 @@ __author__ = 'Piellia Vasyl'
 from app import db
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
+from hashlib import md5
 
 ROLE_USER = 0
 ROLE_ADMIN = 1
@@ -17,6 +18,11 @@ class User(db.Model):
     books = db.relationship('Book', backref='user', lazy='dynamic')
     authors = db.relationship('Author', backref='user', lazy='dynamic')
     role = db.Column(db.SmallInteger, default = ROLE_USER)
+    about_me = db.Column(db.String(140))
+    last_seen = db.Column(db.DateTime)
+
+    def avatar(self, size):
+        return 'http://www.gravatar.com/avatar/' + md5(self.email).hexdigest() + '?d=mm&s=' + str(size)
 
     def __init__(self, username, password, email):
         self.username = username
