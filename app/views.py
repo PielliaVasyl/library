@@ -1,6 +1,6 @@
 from datetime import datetime
-from app.forms import LoginForm, RegisterForm, EditForm
-from app.models import User
+from app.forms import LoginForm, RegisterForm, EditUserForm, NewBookForm, EditBookForm
+from app.models import User, Book, Author
 from flask.ext.login import login_user, logout_user, current_user, login_required
 
 __author__ = 'Piellia Vasyl'
@@ -106,7 +106,7 @@ def user(username):
 @app.route('/user/edit', methods=['GET', 'POST'])
 @login_required
 def user_edit():
-    form = EditForm(g.user.username)
+    form = EditUserForm(g.user.username)
     if form.validate_on_submit():
         g.user.username = form.username.data
         g.user.about_me = form.about_me.data
@@ -132,13 +132,75 @@ def internal_error(error):
     return render_template('500.html'), 500
 
 
-#@app.route('/books')
-#def show_books():
-#    books = db.session.query(Book)
-#    return render_template('books.html', books=books)
+@app.route('/books')
+def show_books():
+    books = db.session.query(Book)
+    return render_template('books.html', books=books)
 
 
-#@app.route('/authors')
-#def show_authros():
-#    authors = db.session.query(Author)
-#    return render_template('authors.html', authors=authors)
+@app.route('/book/new/', methods=['GET', 'POST'])
+@login_required
+def new_book():
+    form = NewBookForm()
+    if form.validate_on_submit():
+        if form.book_title.data is None:
+            flash("Fill in a book title to create a book!")
+            return redirect(url_for('show_books'))
+        book = Book(book_title=form.book_title.data)
+        book.user = g.user
+        if book.book_title in db.session.query(Book.book_title).all():
+            flash('This book title already exists.')
+            return redirect(url_for('new_book'))
+        db.session.add(book)
+        db.session.commit()
+        flash('Book successfully added.')
+        return redirect(url_for('show_books'))
+    return render_template('newbook.html', form=form)
+
+
+@app.route('/book/<int:book_id>/edit/', methods=['GET', 'POST'])
+@login_required
+def edit_book(book_id):
+    book = db.session.query(Book).filter_by(id=book_id).one()
+    form = EditBookForm(book)
+    if form.validate_on_submit():
+        if book.user.id == g.user.id:
+            book.book_title = form.book_title.data
+            db.session.add(book)
+            db.session.commit()
+            flash("Book edited!")
+            return redirect(url_for('edit_book', book_id=book_id, form=form))
+        else:
+            flash('You are not authorized to edit this book','error')
+            return redirect(url_for('edit_book', book_id=book_id))
+    else:
+        form.book_title.data = book.book_title
+    return render_template('book_edit.html', book=book, form=form)
+
+
+@app.route('/book/<int:book_id>/delete/', methods=['GET', 'POST'])
+@login_required
+def delete_book(book_id):
+    book = db.session.query(Book).filter_by(id=book_id).one()
+    if request.method == 'POST':
+        if book:
+            if book.user.id == g.user.id:
+                db.session.delete(book)
+                db.session.commit()
+                flash("Book deleted!")
+                return redirect(url_for('show_books'))
+            else:
+                flash('You are not authorized to delete this book','error')
+                return redirect(url_for('edit_book', book_id=book_id))
+        return redirect(url_for('show_books'))
+    else:
+        return render_template('book_delete.html', book_id=book_id, book=book)
+
+
+
+@app.route('/authors')
+def show_authors():
+    authors = db.session.query(Author)
+    return render_template('authors.html', authors=authors)
+
+

@@ -75,8 +75,11 @@ class Book(db.Model):
 
     book_title = db.Column(db.String(60), nullable=False)
     id = db.Column('book_id', db.Integer, primary_key=True)
-    authors = db.relationship('Author', secondary=association_table, backref='books')
     user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'))
+    authors = db.relationship('Author',
+                              secondary=association_table,
+                              backref='books',
+                              lazy='dynamic')
 
 
 class Author(db.Model):
@@ -84,3 +87,4 @@ class Author(db.Model):
     id = db.Column('author_id', db.Integer, primary_key=True)
     name = db.Column(db.String(250), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'))
+
