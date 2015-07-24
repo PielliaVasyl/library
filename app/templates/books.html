@@ -2,7 +2,9 @@
 {% extends "base.html" %}
 
 {% block content %}
+<h2><a href="{{url_for('new_book')}}">Add new book</a></h2>
 
+		</br></br>
 {% for book in books %}
 
 		<div>
@@ -13,6 +15,6 @@
 
         </br>
 
-	{% endfor %}
+{% endfor %}
 
 {% endblock %}

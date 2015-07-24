@@ -49,7 +49,7 @@ class EditUserForm(Form):
 
 class NewBookForm(Form):
     book_title = StringField('Book title', validators=[DataRequired()])
-    author = SelectField(choices=authors)
+    #author = SelectField(choices=authors)
 
     def validate(self):
         if not Form.validate(self):
@@ -75,5 +75,37 @@ class EditBookForm(Form):
         book = Book.query.filter_by(book_title=self.book_title.data).first()
         if book is not None:
             self.book_title.errors.append('This book title is already in use. Please choose another one.')
+            return False
+        return True
+
+
+class NewAuthorForm(Form):
+    name = StringField('Author`s name', validators=[DataRequired()])
+
+    def validate(self):
+        if not Form.validate(self):
+            return False
+        author = Author.query.filter_by(name=self.name.data).first()
+        if author is not None:
+            self.author.errors.append('This author`s name is already in use. Please choose another one.')
+            return False
+        return True
+
+
+class EditAuthorForm(Form):
+    name = StringField('Author`s name', validators=[DataRequired()])
+
+    def __init__(self, original_name, *args, **kwargs):
+        Form.__init__(self, *args, **kwargs)
+        self.original_name = original_name
+
+    def validate(self):
+        if not Form.validate(self):
+            return False
+        if self.name.data == self.original_name:
+            return True
+        author = Author.query.filter_by(name=self.name.data).first()
+        if author is not None:
+            self.name.errors.append('This author`s name is already in use. Please choose another one.')
             return False
         return True

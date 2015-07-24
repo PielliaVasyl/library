@@ -1,5 +1,5 @@
 from datetime import datetime
-from app.forms import LoginForm, RegisterForm, EditUserForm, NewBookForm, EditBookForm
+from app.forms import LoginForm, RegisterForm, EditUserForm, NewBookForm, EditBookForm, NewAuthorForm, EditAuthorForm
 from app.models import User, Book, Author
 from flask.ext.login import login_user, logout_user, current_user, login_required
 
@@ -204,3 +204,60 @@ def show_authors():
     return render_template('authors.html', authors=authors)
 
 
+@app.route('/author/new/', methods=['GET', 'POST'])
+@login_required
+def new_author():
+    form = NewAuthorForm()
+    if form.validate_on_submit():
+        if form.name.data is None:
+            flash("Fill in a author`s name to create an author!")
+            return redirect(url_for('show_authors'))
+        author = Author(name=form.name.data)
+        author.user = g.user
+        if author.name in db.session.query(Author.name).all():
+            flash('This author already exists.')
+            return redirect(url_for('new_author'))
+        db.session.add(author)
+        db.session.commit()
+        flash('Author successfully added.')
+        return redirect(url_for('show_authors'))
+    return render_template('author_new.html', form=form)
+
+
+@app.route('/author/<int:author_id>/edit/', methods=['GET', 'POST'])
+@login_required
+def edit_author(author_id):
+    author = db.session.query(Author).filter_by(id=author_id).one()
+    form = EditAuthorForm(author)
+    if form.validate_on_submit():
+        if author.user.id == g.user.id:
+            author.name = form.name.data
+            db.session.add(author)
+            db.session.commit()
+            flash("Author edited!")
+            return redirect(url_for('edit_author', author_id=author_id, form=form))
+        else:
+            flash('You are not authorized to edit this author','error')
+            return redirect(url_for('edit_author', author_id=author_id))
+    else:
+        form.name.data = author.name
+    return render_template('author_edit.html', author=author, form=form)
+
+
+@app.route('/author/<int:author_id>/delete/', methods=['GET', 'POST'])
+@login_required
+def delete_author(author_id):
+    author = db.session.query(Author).filter_by(id=author_id).one()
+    if request.method == 'POST':
+        if author:
+            if author.user.id == g.user.id:
+                db.session.delete(author)
+                db.session.commit()
+                flash("Author deleted!")
+                return redirect(url_for('show_authors'))
+            else:
+                flash('You are not authorized to delete this author','error')
+                return redirect(url_for('edit_author', author_id=author_id))
+        return redirect(url_for('show_authors'))
+    else:
+        return render_template('author_delete.html', author_id=author_id, author=author)

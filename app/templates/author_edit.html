@@ -1,0 +1,26 @@
+<!-- extend base layout -->
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Edit Your Author</h1>
+<form action="" method="post" name="edit">
+    {{form.hidden_tag()}}
+    <table>
+        <tr>
+            <td>Your Author Name:</td>
+            <td>{{form.name(size='30') }}
+                <input type='submit' value='Edit'>
+                {% for error in form.errors.name %}
+                <br><span style="color: red;">[{{error}}]</span>
+                {% endfor %}
+            </td>
+        </tr>
+
+    </table>
+</form>
+</br>
+<a href= '{{url_for('show_authors')}}'>Cancel</a>
+{% endblock %}
+
+
+

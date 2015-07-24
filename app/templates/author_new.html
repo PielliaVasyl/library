@@ -2,23 +2,22 @@
 {% block content %}
   <form action="" method=post class="form-horizontal">
       {{ form.hidden_tag() }}
-    <h2> New Book </h2>
+    <h2> New Author </h2>
 
     <div class="control-group">
         <div class="controls">
-            {{ form.book_title(class="input-xlarge", placeholder="Enter book title", required=True) }}
-             {{form.book_title.data }}
-            {% for error in form.errors.book_title %}
+            {{ form.name(class="input-xlarge", placeholder="Enter author`s name", required=True) }}
+             {{form.name.data }}
+            {% for error in form.errors.name %}
             <span style="color: red;">[{{error}}]</span>
             {% endfor %}
         </div>
     </div>
 
 
-
     <div class="control-group">
         <div class="controls">
-          <button type="submit" class="btn btn-success">Add book</button>
+          <button type="submit" class="btn btn-success">Add author</button>
         </div>
     </div>
   </form>
