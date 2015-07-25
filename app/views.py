@@ -1,23 +1,30 @@
+__author__ = 'Piellia Vasyl'
+
 from datetime import datetime
 from app.forms import LoginForm, RegisterForm, EditUserForm, NewBookForm, EditBookForm, NewAuthorForm, EditAuthorForm, \
     AddAuthorToBookForm, AddBookToAuthorForm
 from app.models import User, Book, Author
 from flask.ext.login import login_user, logout_user, current_user, login_required
-
-__author__ = 'Piellia Vasyl'
-
-from app import app, db, lm
+from app import app, db, lm, models
 from flask import render_template, url_for, flash, redirect, request, g
+from config import POSTS_PER_PAGE
+
 
 
 @app.route('/')
 @app.route('/index')
+@app.route('/index/<int:page>', methods=['GET', 'POST'])
 @login_required
-def index():
+def index(page=1):
     user = g.user
+    books = models.Book.query.paginate(page, POSTS_PER_PAGE, False)
+    authors = models.Author.query.paginate(page, POSTS_PER_PAGE, False)
     return render_template("index.html",
                            title='Home',
-                           user=user)
+                           user=user,
+                           books=books,
+                           authors=authors,
+                           POSTS_PER_PAGE=POSTS_PER_PAGE)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -89,15 +96,15 @@ def load_user(id):
     return db.session.query(User).get(int(id))
 
 
-@app.route('/user/<username>')
+@app.route('/user/<username>/<int:page>', methods=['GET', 'POST'])
 @login_required
-def user(username):
+def user(username, page=1):
     user = User.query.filter_by(username=username).first()
     if user is None:
         flash('User ' + username + ' not found.')
         return redirect(url_for('index'))
-    books = user.books
-    authors = user.authors
+    books = models.User.query.filter_by(username=username).first().books.paginate(page, POSTS_PER_PAGE, False)
+    authors = models.User.query.filter_by(username=username).first().authors.paginate(page, POSTS_PER_PAGE, False)
     return render_template('user.html',
                            user=user,
                            books=books,
@@ -134,8 +141,9 @@ def internal_error(error):
 
 
 @app.route('/books')
-def show_books():
-    books = db.session.query(Book)
+@app.route('/books/<int:page>', methods=['GET', 'POST'])
+def show_books(page = 1):
+    books = models.Book.query.paginate(page, POSTS_PER_PAGE, False)
     return render_template('books.html', books=books)
 
 
@@ -230,6 +238,7 @@ def add_author_to_book(book_id):
 @login_required
 def delete_author_from_book(book_id, author_id):
     book = db.session.query(Book).filter_by(id=book_id).one()
+    form = EditBookForm(book)
     if request.method == 'POST':
         if book.user.id == g.user.id:
             author_to_delete = db.session.query(Author).filter_by(id=author_id).one()
@@ -245,8 +254,9 @@ def delete_author_from_book(book_id, author_id):
         return render_template('book_edit.html', book_id=book_id)
 
 @app.route('/authors')
-def show_authors():
-    authors = db.session.query(Author)
+@app.route('/authors/<int:page>', methods=['GET', 'POST'])
+def show_authors(page=1):
+    authors = models.Author.query.paginate(page, POSTS_PER_PAGE, False)
     return render_template('authors.html', authors=authors)
 
 
@@ -339,6 +349,7 @@ def add_book_to_author(author_id):
 @login_required
 def delete_book_from_author(book_id, author_id):
     author = db.session.query(Author).filter_by(id=author_id).one()
+    form = EditAuthorForm(author)
     if request.method == 'POST':
         if author.user.id == g.user.id:
             book_to_delete = db.session.query(Book).filter_by(id=book_id).one()

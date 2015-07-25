@@ -13,11 +13,21 @@
         </td>
     </tr>
 </table>
-<hr>
-{% for book in books %}
-    {% include 'book.html' %}
-{% endfor %}
-{% for author in authors %}
-    {% include 'author.html' %}
-{% endfor %}
+
+<!-- books and authors is a Paginate object -->
+<table>
+    <tr>
+    <td valign="top">
+        {% for book in books.items %}
+        {% include 'book.html' %}
+        {% endfor %}
+    </td>
+
+    <td valign="top">
+        {% for author in authors.items %}
+        {% include 'author.html' %}
+        {% endfor %}
+    </td>
+    </tr>
+</table>
 {% endblock %}

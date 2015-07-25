@@ -1,8 +1,27 @@
 {% extends "base.html" %}
 {% block content %}
     <h1>Hello, {{ user.username }}!</h1>
-    <h2><a href="{{url_for('show_books')}}">Go to books</a></h2>
-    <h2><a href="{{url_for('show_authors')}}">Go to authors</a></h2>
+<!-- books and authors is a Paginate object -->
+<table><tr>
+    <th><h2><a href="{{url_for('show_books')}}">Newest books</a></h2></th>
+    <th><h2><a href="{{url_for('show_authors')}}">Newest authors</a></h2></th>
+    </tr>
+    <tr>
+    <td valign="top">
+
+        {% for book in books.items %}
+        {% include 'book.html' %}
+        {% endfor %}
+    </td>
+
+    <td valign="top">
+
+        {% for author in authors.items %}
+        {% include 'author.html' %}
+        {% endfor %}
+    </td>
+</tr>
+</table>
 
 {% endblock %}
 
