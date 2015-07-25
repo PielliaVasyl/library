@@ -24,7 +24,8 @@ body {
 				<a class="brand" href="/">Library</a>
 				<div class="nav-collapse collapse">
             <ul class="nav">
-                <li class="active"><a href="/">Home</a></li>
+                <li><a href="{{ url_for('show_books') }}">Books</a></li>
+                <li><a href="{{ url_for('show_authors') }}">Authors</a></li>
                     {% if g.user.is_authenticated()%}
                     <li><a href="{{ url_for('user', username = g.user.username) }}">Your Profile</a></li>
                     <li><a href="{{ url_for('logout') }}">Logout</a></li>

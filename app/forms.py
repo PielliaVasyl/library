@@ -1,10 +1,11 @@
 __author__ = 'Piellia Vasyl'
 from flask.ext.wtf import Form
-from wtforms import StringField, PasswordField, BooleanField, TextAreaField, SelectField
+from wtforms import StringField, PasswordField, BooleanField, TextAreaField, SelectField, IntegerField
 from wtforms.validators import DataRequired, Email, Length
 from app import db
 from app.models import User, Author, Book
 from wtforms.fields.html5 import EmailField
+
 
 authors = [(author.id, author.name) for author in db.session.query(Author)]
 if not authors:
@@ -49,7 +50,7 @@ class EditUserForm(Form):
 
 class NewBookForm(Form):
     book_title = StringField('Book title', validators=[DataRequired()])
-    #author = SelectField(choices=authors)
+    author = SelectField(choices=authors, coerce=int)
 
     def validate(self):
         if not Form.validate(self):
@@ -108,4 +109,19 @@ class EditAuthorForm(Form):
         if author is not None:
             self.name.errors.append('This author`s name is already in use. Please choose another one.')
             return False
+        return True
+
+
+class AddAuthorToBookForm(Form):
+    book_id = IntegerField()
+    author = SelectField('Select author', choices=authors)
+
+    def validate(self):
+        return True
+
+class AddBookToAuthorForm(Form):
+    author_id = IntegerField()
+    book = SelectField('Select book', choices=books)
+
+    def validate(self):
         return True

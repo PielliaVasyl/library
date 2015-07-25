@@ -7,14 +7,20 @@
     <div class="control-group">
         <div class="controls">
             {{ form.book_title(class="input-xlarge", placeholder="Enter book title", required=True) }}
-             {{form.book_title.data }}
             {% for error in form.errors.book_title %}
             <span style="color: red;">[{{error}}]</span>
             {% endfor %}
         </div>
     </div>
+    <div class="control-group">
+        <div class="controls">
 
-
+            {{ form.author }}
+            {% for error in form.errors.author %}
+            <span style="color: red;">[{{error}}]</span>
+            {% endfor %}
+        </div>
+    </div>
 
     <div class="control-group">
         <div class="controls">

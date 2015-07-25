@@ -1,5 +1,6 @@
 from datetime import datetime
-from app.forms import LoginForm, RegisterForm, EditUserForm, NewBookForm, EditBookForm, NewAuthorForm, EditAuthorForm
+from app.forms import LoginForm, RegisterForm, EditUserForm, NewBookForm, EditBookForm, NewAuthorForm, EditAuthorForm, \
+    AddAuthorToBookForm, AddBookToAuthorForm
 from app.models import User, Book, Author
 from flask.ext.login import login_user, logout_user, current_user, login_required
 
@@ -147,6 +148,8 @@ def new_book():
             flash("Fill in a book title to create a book!")
             return redirect(url_for('show_books'))
         book = Book(book_title=form.book_title.data)
+        author = db.session.query(Author).filter_by(id=form.author.data).first()
+        book.authors.append(author)
         book.user = g.user
         if book.book_title in db.session.query(Book.book_title).all():
             flash('This book title already exists.')
@@ -175,7 +178,9 @@ def edit_book(book_id):
             return redirect(url_for('edit_book', book_id=book_id))
     else:
         form.book_title.data = book.book_title
-    return render_template('book_edit.html', book=book, form=form)
+        authors = book.authors
+        add_author_form = AddAuthorToBookForm()
+    return render_template('book_edit.html', book=book, form=form, authors=authors, add_author_form=add_author_form)
 
 
 @app.route('/book/<int:book_id>/delete/', methods=['GET', 'POST'])
@@ -197,6 +202,47 @@ def delete_book(book_id):
         return render_template('book_delete.html', book_id=book_id, book=book)
 
 
+@app.route('/book/authors/<int:book_id>/add', methods=['GET', 'POST'])
+@login_required
+def add_author_to_book(book_id):
+    book = db.session.query(Book).filter_by(id=book_id).one()
+    add_author_form = AddAuthorToBookForm()
+    form = EditBookForm(book)
+    if add_author_form.validate_on_submit():
+        author_id = add_author_form.author.data
+        if book.user.id == g.user.id:
+            author_to_add = db.session.query(Author).filter_by(id=author_id).one()
+            book.authors.append(author_to_add)
+            db.session.add(book)
+            db.session.commit()
+            flash("Author added to book!")
+            return redirect(url_for('edit_book', book_id=book_id, form=form))
+        else:
+            flash('You are not authorized to edit this book','error')
+            return redirect(url_for('edit_book', book_id=book_id, form=form))
+    else:
+        form.book_title.data = book.book_title
+        authors = book.authors
+    return render_template('book_edit.html', book_id=book_id, add_author_form=add_author_form, form=form, book=book, authors=authors)
+
+
+@app.route('/book/authors/<int:book_id>/<int:author_id>/delete', methods=['GET', 'POST'])
+@login_required
+def delete_author_from_book(book_id, author_id):
+    book = db.session.query(Book).filter_by(id=book_id).one()
+    if request.method == 'POST':
+        if book.user.id == g.user.id:
+            author_to_delete = db.session.query(Author).filter_by(id=author_id).one()
+            book.authors.remove(author_to_delete)
+            db.session.add(book)
+            db.session.commit()
+            flash("Author deleted form the book!")
+            return redirect(url_for('edit_book', book_id=book_id, form=form))
+        else:
+            flash('You are not authorized to edit this book', 'error')
+            return redirect(url_for('edit_book', book_id=book_id, form=form))
+    else:
+        return render_template('book_edit.html', book_id=book_id)
 
 @app.route('/authors')
 def show_authors():
@@ -238,10 +284,12 @@ def edit_author(author_id):
             return redirect(url_for('edit_author', author_id=author_id, form=form))
         else:
             flash('You are not authorized to edit this author','error')
-            return redirect(url_for('edit_author', author_id=author_id))
+            return redirect(url_for('edit_author', author_id=author_id, form=form))
     else:
         form.name.data = author.name
-    return render_template('author_edit.html', author=author, form=form)
+        books = author.books
+        add_book_form = AddBookToAuthorForm()
+    return render_template('author_edit.html', author=author, form=form, books=books, add_book_form=add_book_form)
 
 
 @app.route('/author/<int:author_id>/delete/', methods=['GET', 'POST'])
@@ -261,3 +309,46 @@ def delete_author(author_id):
         return redirect(url_for('show_authors'))
     else:
         return render_template('author_delete.html', author_id=author_id, author=author)
+
+
+@app.route('/author/books/<int:author_id>/add', methods=['GET', 'POST'])
+@login_required
+def add_book_to_author(author_id):
+    author = db.session.query(Author).filter_by(id=author_id).one()
+    add_book_form = AddBookToAuthorForm()
+    form = EditAuthorForm(author)
+    if add_book_form.validate_on_submit():
+        book_id = add_book_form.book.data
+        if author.user.id == g.user.id:
+            book_to_add = db.session.query(Book).filter_by(id=book_id).one()
+            author.books.append(book_to_add)
+            db.session.add(author)
+            db.session.commit()
+            flash("Book added to author!")
+            return redirect(url_for('edit_author', author_id=author_id, form=form))
+        else:
+            flash('You are not authorized to edit this author','error')
+            return redirect(url_for('edit_author', author_id=author_id, form=form))
+    else:
+        form.name.data = author.name
+        books = author.books
+    return render_template('author_edit.html', author_id=author_id, add_book_form=add_book_form, form=form, author=author, books=books)
+
+
+@app.route('/author/books/<int:author_id>/<int:book_id>/delete', methods=['GET', 'POST'])
+@login_required
+def delete_book_from_author(book_id, author_id):
+    author = db.session.query(Author).filter_by(id=author_id).one()
+    if request.method == 'POST':
+        if author.user.id == g.user.id:
+            book_to_delete = db.session.query(Book).filter_by(id=book_id).one()
+            author.books.remove(book_to_delete)
+            db.session.add(author)
+            db.session.commit()
+            flash("Book deleted form the author!")
+            return redirect(url_for('edit_author', author_id=author_id, form=form))
+        else:
+            flash('You are not authorized to edit this author', 'error')
+            return redirect(url_for('edit_author', author_id=author_id, form=form))
+    else:
+        return render_template('author_edit.html', author_id=author_id)

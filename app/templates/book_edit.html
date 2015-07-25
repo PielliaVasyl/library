@@ -19,7 +19,26 @@
     </table>
 </form>
 </br>
-<a href= '{{url_for('show_books')}}'>Cancel</a>
+
+<h2>Add another author</h2>
+
+<form action="{{url_for('add_author_to_book', book_id=book.id)}}" method="POST">
+    {{ add_author_form.author }}
+                {% for error in add_author_form.errors.author %}
+                <br><span style="color: red;">[{{error}}]</span>
+                {% endfor %}
+    <input type='submit' value='Add author'>
+</form>
+
+<h2>List of authors</h2>
+	{% for author in authors %}
+		<form action="{{url_for('delete_author_from_book', book_id = book.id, author_id=author.id)}}" method = 'POST'>
+			{{author.name}}
+			<input type='submit' value='Delete'>
+		</form>
+
+	{%endfor%}
+<a href= '{{url_for('show_books')}}'>Return</a>
 {% endblock %}
 
 
