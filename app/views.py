@@ -2,19 +2,17 @@ __author__ = 'Piellia Vasyl'
 
 from datetime import datetime
 from app.forms import LoginForm, RegisterForm, EditUserForm, NewBookForm, EditBookForm, NewAuthorForm, EditAuthorForm, \
-    AddAuthorToBookForm, AddBookToAuthorForm
+    AddAuthorToBookForm, AddBookToAuthorForm, SearchForm
 from app.models import User, Book, Author
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from app import app, db, lm, models
 from flask import render_template, url_for, flash, redirect, request, g
-from config import POSTS_PER_PAGE
-
+from config import POSTS_PER_PAGE, MAX_SEARCH_RESULTS
 
 
 @app.route('/')
 @app.route('/index')
 @app.route('/index/<int:page>', methods=['GET', 'POST'])
-@login_required
 def index(page=1):
     user = g.user
     books = models.Book.query.paginate(page, POSTS_PER_PAGE, False)
@@ -51,6 +49,7 @@ def login():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    g.search_form = SearchForm()
     if g.user is not None and g.user.is_authenticated():
         flash('You are already logged in.')
         return redirect(request.args.get('next') or url_for('index'))
@@ -89,6 +88,7 @@ def before_request():
         g.user.last_seen = datetime.utcnow()
         db.session.add(g.user)
         db.session.commit()
+    g.search_form = SearchForm()
 
 
 @lm.user_loader
@@ -156,7 +156,7 @@ def new_book():
             flash("Fill in a book title to create a book!")
             return redirect(url_for('show_books'))
         book = Book(book_title=form.book_title.data)
-        author = db.session.query(Author).filter_by(id=form.author.data).first()
+        author = form.author.data
         book.authors.append(author)
         book.user = g.user
         if book.book_title in db.session.query(Book.book_title).all():
@@ -217,9 +217,8 @@ def add_author_to_book(book_id):
     add_author_form = AddAuthorToBookForm()
     form = EditBookForm(book)
     if add_author_form.validate_on_submit():
-        author_id = add_author_form.author.data
         if book.user.id == g.user.id:
-            author_to_add = db.session.query(Author).filter_by(id=author_id).one()
+            author_to_add = add_author_form.author.data
             book.authors.append(author_to_add)
             db.session.add(book)
             db.session.commit()
@@ -328,9 +327,8 @@ def add_book_to_author(author_id):
     add_book_form = AddBookToAuthorForm()
     form = EditAuthorForm(author)
     if add_book_form.validate_on_submit():
-        book_id = add_book_form.book.data
         if author.user.id == g.user.id:
-            book_to_add = db.session.query(Book).filter_by(id=book_id).one()
+            book_to_add = add_book_form.book.data
             author.books.append(book_to_add)
             db.session.add(author)
             db.session.commit()
@@ -363,3 +361,29 @@ def delete_book_from_author(book_id, author_id):
             return redirect(url_for('edit_author', author_id=author_id, form=form))
     else:
         return render_template('author_edit.html', author_id=author_id)
+
+
+@app.route('/search', methods = ['POST'])
+@login_required
+def search():
+    if not g.search_form.validate_on_submit():
+        return redirect(url_for('index'))
+    fields=g.search_form.where_search.data
+    return redirect(url_for('search_results', query=g.search_form.search.data, fields=fields))
+
+
+@app.route('/search_results/<fields>/<query>')
+@login_required
+def search_results(query, fields):
+    results = []
+    if fields == 'book_title':
+        results = Book.query.whoosh_search(query, MAX_SEARCH_RESULTS).all()
+    if fields == 'authors':
+        results = []
+        for author in Author.query.whoosh_search(query, MAX_SEARCH_RESULTS).all():
+            for book in author.books:
+                results.append(book)
+
+    return render_template('search_results.html',
+                           query=query,
+                           results=results)

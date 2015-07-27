@@ -7,7 +7,6 @@
     <div class="control-group">
         <div class="controls">
             {{ form.name(class="input-xlarge", placeholder="Enter author`s name", required=True) }}
-             {{form.name.data }}
             {% for error in form.errors.name %}
             <span style="color: red;">[{{error}}]</span>
             {% endfor %}

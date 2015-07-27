@@ -1,6 +1,12 @@
 <table>
     <tr valign="top">
-        <td><img src="{{book.user.avatar(50)}}"></td><td><i>{{book.user.username}} added book:</i><br><b>{{book.book_title}}</b></td>
+        <td><b>{{book.book_title}}</b>({% for author in book.authors: %}
+            {%if author != book.authors[0]: %}
+            , {{author.name}}
+            {%else%}
+            {{author.name}}
+            {%endif%}
+            {%endfor%})</td>
         <td><form action="{{url_for('edit_book', book_id = book.id)}}"><input type='submit' value='Edit'></form></td>
         <td><form action="{{url_for('delete_book', book_id = book.id)}}"><input type='submit' value='Delete'></form></td>
     </tr>

@@ -1,12 +1,14 @@
 __author__ = 'Piellia Vasyl'
 
-from app import db
+from app import db, app
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from hashlib import md5
+import flask.ext.whooshalchemy as whooshalchemy
 
 ROLE_USER = 0
 ROLE_ADMIN = 1
+
 
 class User(db.Model):
     __tablename__ = "users"
@@ -26,7 +28,7 @@ class User(db.Model):
 
     @staticmethod
     def make_unique_username(username):
-        if User.query.filter_by(username = username).first() == None:
+        if User.query.filter_by(username = username).first() is None:
             return username
         version = 2
         while True:
@@ -65,16 +67,16 @@ class User(db.Model):
 
 
 association_table = db.Table('association', db.Model.metadata,
-    db.Column('author_id', db.Integer, db.ForeignKey('authors.author_id')),
-    db.Column('book_id', db.Integer, db.ForeignKey('books.book_id'))
+    db.Column('author_id', db.Integer, db.ForeignKey('authors.id')),
+    db.Column('book_id', db.Integer, db.ForeignKey('books.id'))
 )
 
 
 class Book(db.Model):
     __tablename__ = 'books'
-
+    __searchable__ = ['book_title']
     book_title = db.Column(db.String(60), nullable=False)
-    id = db.Column('book_id', db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'))
     authors = db.relationship('Author',
                               secondary=association_table,
@@ -84,7 +86,11 @@ class Book(db.Model):
 
 class Author(db.Model):
     __tablename__ = 'authors'
-    id = db.Column('author_id', db.Integer, primary_key=True)
+    __searchable__ = ['name']
+    id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(250), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'))
 
+
+whooshalchemy.whoosh_index(app, Book)
+whooshalchemy.whoosh_index(app, Author)

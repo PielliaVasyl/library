@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-    <h1>Hello, {{ user.username }}!</h1>
+   {%if user.username:%} <h1>Hello, {{ user.username }}!</h1>{% endif %}
 <!-- books and authors is a Paginate object -->
 <table><tr>
     <th><h2><a href="{{url_for('show_books')}}">Newest books</a></h2></th>
